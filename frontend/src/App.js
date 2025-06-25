@@ -1008,66 +1008,117 @@ function App() {
           </div>
         </div>
 
-        {/* Admin Panel */}
+        {/* Admin Panel - ENHANCED VISIBILITY */}
         {currentUser.isAdmin && (
-          <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">🔧 {t('adminPanel')}</h2>
+          <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-6 shadow-lg mb-8 border-2 border-red-200">
+            <div className="flex items-center mb-4">
+              <div className="bg-red-500 text-white p-2 rounded-full mr-3">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-red-800">🔧 {t('adminPanel')}</h2>
+              <div className="ml-auto bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                ADMIN ONLY
+              </div>
+            </div>
             
             {/* Pending Approvals */}
-            <div className="mb-6">
-              <h3 className="font-medium text-gray-700 mb-3">{t('pendingApprovals')}</h3>
+            <div className="mb-8 bg-white rounded-xl p-4 border-l-4 border-yellow-400">
+              <h3 className="text-lg font-bold text-yellow-800 mb-3 flex items-center">
+                ⏳ {t('pendingApprovals')}
+                <span className="ml-2 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                  {getPendingUsers().length} {getPendingUsers().length === 1 ? 'user' : 'users'}
+                </span>
+              </h3>
               {getPendingUsers().length > 0 ? (
                 <div className="space-y-3">
                   {getPendingUsers().map(user => (
                     <div key={user.email} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                       <div>
-                        <p className="font-medium">{user.username}</p>
+                        <p className="font-bold text-gray-800">{user.username}</p>
                         <p className="text-sm text-gray-600">{user.email}</p>
+                        <p className="text-xs text-gray-500">Created: {new Date(user.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => approveUser(user.email)}
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all font-medium shadow-lg"
                         >
-                          {t('approve')}
+                          ✅ {t('approve')}
                         </button>
                         <button
                           onClick={() => rejectUser(user.email)}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all font-medium shadow-lg"
                         >
-                          {t('reject')}
+                          ❌ {t('reject')}
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">{t('noPendingApprovals')}</p>
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <div className="text-4xl mb-2">✅</div>
+                  <p className="text-gray-500 font-medium">{t('noPendingApprovals')}</p>
+                </div>
               )}
             </div>
 
-            {/* Approved Users Management */}
-            <div>
-              <h3 className="font-medium text-gray-700 mb-3">{t('approvedUsers')}</h3>
-              <div className="space-y-3">
-                {getApprovedUsers()
-                  .filter(user => user.email !== currentUser.email) // Don't show self
-                  .map(user => (
-                    <div key={user.email} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                      <div>
-                        <p className="font-medium">{user.username}</p>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        {user.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">{t('admin')}</span>}
+            {/* Approved Users Management - HIGHLIGHTED REMOVE SECTION */}
+            <div className="bg-white rounded-xl p-4 border-l-4 border-red-400">
+              <h3 className="text-lg font-bold text-red-800 mb-3 flex items-center">
+                🗑️ {t('userManagement')} - {t('approvedUsers')}
+                <span className="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">
+                  {getApprovedUsers().filter(user => user.email !== currentUser.email).length} users
+                </span>
+              </h3>
+              
+              {getApprovedUsers().filter(user => user.email !== currentUser.email).length > 0 ? (
+                <div className="space-y-3">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                    <p className="text-red-800 text-sm font-medium flex items-center">
+                      ⚠️ <strong className="ml-1">WARNING:</strong> 
+                      <span className="ml-1">Removing users will permanently delete their accounts and ALL transaction data!</span>
+                    </p>
+                  </div>
+                  
+                  {getApprovedUsers()
+                    .filter(user => user.email !== currentUser.email)
+                    .map(user => (
+                      <div key={user.email} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border-2 border-red-200 hover:border-red-400 transition-all">
+                        <div className="flex items-center">
+                          <div className="bg-red-100 p-2 rounded-full mr-3">
+                            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-800">{user.username}</p>
+                            <p className="text-sm text-gray-600">{user.email}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              {user.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">{t('admin')}</span>}
+                              <span className="text-xs text-gray-500">Approved: {new Date(user.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeUser(user.email)}
+                          className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-bold shadow-lg transform hover:scale-105 flex items-center"
+                        >
+                          🗑️ {t('remove')}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => removeUser(user.email)}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
-                      >
-                        {t('remove')}
-                      </button>
-                    </div>
-                  ))}
-              </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <div className="text-4xl mb-2">👤</div>
+                  <p className="text-gray-500 font-medium">No other users to manage</p>
+                  <p className="text-gray-400 text-sm">Create test users to see the remove functionality</p>
+                </div>
+              )}
             </div>
           </div>
         )}
