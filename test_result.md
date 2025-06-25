@@ -320,3 +320,5 @@ agent_communication:
       message: "Completed initial implementation of budget planner app with all core features. User requested manual testing. App is running and ready for user testing. All core functionality implemented including transaction entry, calculations, local storage, and responsive UI."
     - agent: "user"
       message: "Manual testing completed successfully. User confirmed all features are working properly and the app 'looks good'."
+    - agent: "main"
+      message: "Enhanced budget planner with advanced features: Interactive charts (monthly trends, category breakdown), CSV/JSON export, date filtering, edit transactions, 9 expense categories, and tab navigation. All new features ready for testing. User said 'go ahead' - proceeding with testing."
