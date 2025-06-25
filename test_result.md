@@ -305,11 +305,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Income/Expense Transaction Entry"
-    - "Total Income Calculation"
-    - "Total Expenses Calculation"
-    - "Net Balance Calculation (Income - Expenses)"
-    - "Local Storage Data Persistence"
+    - "Interactive Charts Implementation"
+    - "Data Export Functionality"
+    - "Date Filtering System"
+    - "Edit Transaction Modal"
+    - "Enhanced Categories System"
+    - "Tab Navigation System"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
