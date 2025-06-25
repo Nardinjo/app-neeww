@@ -28,7 +28,248 @@ ChartJS.register(
   Legend
 );
 
+// Translations
+const translations = {
+  en: {
+    // App Title & Header
+    appTitle: "Budget Planner Pro",
+    appSubtitle: "Track, analyze, and manage your finances",
+    welcome: "Welcome",
+    admin: "Admin",
+    logout: "Logout",
+    
+    // Authentication
+    login: "Login",
+    signup: "Sign Up",
+    email: "Email",
+    password: "Password",
+    username: "Username",
+    confirmPassword: "Confirm Password",
+    enterEmail: "Enter your email",
+    enterPassword: "Enter your password",
+    chooseUsername: "Choose a username",
+    createPassword: "Create a password",
+    confirmYourPassword: "Confirm your password",
+    approvalNote: "New accounts require admin approval (except leonard.lamaj@gmail.com)",
+    accountCreated: "Account created! Please wait for admin approval.",
+    adminCreated: "Admin account created and approved!",
+    emailExists: "Email already registered",
+    passwordsNoMatch: "Passwords do not match",
+    passwordTooShort: "Password must be at least 6 characters",
+    fillAllFields: "Please fill all fields",
+    invalidCredentials: "Invalid email or password",
+    pendingApproval: "Your account is pending admin approval",
+    
+    // Navigation
+    dashboard: "Dashboard",
+    charts: "Charts",
+    transactions: "Transactions",
+    
+    // Dashboard
+    totalIncome: "Total Income",
+    totalExpenses: "Total Expenses",
+    netBalance: "Net Balance",
+    addNewTransaction: "Add New Transaction",
+    description: "Description",
+    amount: "Amount",
+    type: "Type",
+    category: "Category",
+    income: "Income",
+    expense: "Expense",
+    addTransaction: "Add Transaction",
+    enterDescription: "Enter description",
+    
+    // Categories
+    food: "Food",
+    transportation: "Transportation",
+    entertainment: "Entertainment",
+    shopping: "Shopping",
+    bills: "Bills",
+    healthcare: "Healthcare",
+    education: "Education",
+    travel: "Travel",
+    general: "General",
+    
+    // Multi-user
+    viewOthersBudgets: "View Other Users' Budgets",
+    myBudget: "My Budget",
+    readOnlyMode: "You are viewing {username}'s budget (read-only)",
+    canOnlyAdd: "You can only add transactions to your own budget",
+    canOnlyEdit: "You can only edit your own transactions",
+    canOnlyDelete: "You can only delete your own transactions",
+    
+    // Admin Panel
+    adminPanel: "Admin Panel",
+    userManagement: "User Management",
+    pendingApprovals: "Pending Approvals:",
+    approvedUsers: "Approved Users:",
+    noPendingApprovals: "No pending approvals",
+    approve: "Approve",
+    reject: "Reject",
+    remove: "Remove",
+    userApproved: "User {username} has been approved!",
+    userRejected: "User rejected and removed",
+    userRemoved: "User {username} has been removed",
+    confirmRemoveUser: "Are you sure you want to permanently remove user {username}? This will delete all their data.",
+    cannotRemoveSelf: "You cannot remove your own admin account",
+    
+    // Charts
+    monthlyTrends: "Monthly Trends",
+    expenseCategories: "Expense Categories",
+    incomeVsExpenses: "Income vs Expenses (Last 6 Months)",
+    spendingByCategory: "Spending by Category",
+    
+    // Transactions
+    dateFilter: "Date Filter",
+    clearFilter: "Clear Filter",
+    exportCSV: "Export CSV",
+    exportJSON: "Export JSON",
+    startDate: "Start Date",
+    endDate: "End Date",
+    filtered: "filtered",
+    noTransactionsFound: "No transactions found for the selected criteria.",
+    editTransaction: "Edit Transaction",
+    deleteTransaction: "Delete transaction",
+    editTransactionModal: "Edit Transaction",
+    saveChanges: "Save Changes",
+    cancel: "Cancel",
+    validDescription: "Please enter a valid description and amount",
+    confirmDelete: "Are you sure you want to delete this transaction?",
+    
+    // Footer & Misc
+    dataSavedLocally: "Multi-user budget management • {count} transactions • Data saved locally",
+    language: "Language",
+    english: "English",
+    albanian: "Albanian"
+  },
+  
+  al: {
+    // App Title & Header
+    appTitle: "Planifikuesi i Buxhetit Pro",
+    appSubtitle: "Gjurmo, analizo dhe menaxho financat tuaja",
+    welcome: "Mirësevini",
+    admin: "Admin",
+    logout: "Dilni",
+    
+    // Authentication
+    login: "Hyrje",
+    signup: "Regjistrimi",
+    email: "Email",
+    password: "Fjalëkalimi",
+    username: "Emri i përdoruesit",
+    confirmPassword: "Konfirmoni fjalëkalimin",
+    enterEmail: "Futni email-in tuaj",
+    enterPassword: "Futni fjalëkalimin tuaj",
+    chooseUsername: "Zgjidhni një emër përdoruesi",
+    createPassword: "Krijoni një fjalëkalim",
+    confirmYourPassword: "Konfirmoni fjalëkalimin tuaj",
+    approvalNote: "Llogaritë e reja kërkojnë miratim nga administratori (përveç leonard.lamaj@gmail.com)",
+    accountCreated: "Llogaria u krijua! Ju lutemi prisni miratimin e administratorit.",
+    adminCreated: "Llogaria e administratorit u krijua dhe u miratua!",
+    emailExists: "Email-i është tashmë i regjistruar",
+    passwordsNoMatch: "Fjalëkalimet nuk përputhen",
+    passwordTooShort: "Fjalëkalimi duhet të ketë të paktën 6 karaktere",
+    fillAllFields: "Ju lutemi plotësoni të gjitha fushat",
+    invalidCredentials: "Email ose fjalëkalim i pavlefshëm",
+    pendingApproval: "Llogaria juaj është në pritje të miratimit të administratorit",
+    
+    // Navigation
+    dashboard: "Paneli",
+    charts: "Grafikët",
+    transactions: "Transaksionet",
+    
+    // Dashboard
+    totalIncome: "Të Ardhurat Totale",
+    totalExpenses: "Shpenzimet Totale",
+    netBalance: "Bilanci Neto",
+    addNewTransaction: "Shto Transaksion të Ri",
+    description: "Përshkrimi",
+    amount: "Shuma",
+    type: "Lloji",
+    category: "Kategoria",
+    income: "Të Ardhura",
+    expense: "Shpenzim",
+    addTransaction: "Shto Transaksion",
+    enterDescription: "Futni përshkrimin",
+    
+    // Categories
+    food: "Ushqim",
+    transportation: "Transport",
+    entertainment: "Argëtim",
+    shopping: "Blerje",
+    bills: "Fatura",
+    healthcare: "Shëndetësi",
+    education: "Arsim",
+    travel: "Udhëtim",
+    general: "Të Përgjithshme",
+    
+    // Multi-user
+    viewOthersBudgets: "Shiko Buxhetet e Përdoruesve të Tjerë",
+    myBudget: "Buxheti Im",
+    readOnlyMode: "Po shikoni buxhetin e {username} (vetëm lexim)",
+    canOnlyAdd: "Mund të shtoni transaksione vetëm në buxhetin tuaj",
+    canOnlyEdit: "Mund të redaktoni vetëm transaksionet tuaja",
+    canOnlyDelete: "Mund të fshini vetëm transaksionet tuaja",
+    
+    // Admin Panel
+    adminPanel: "Paneli i Administratorit",
+    userManagement: "Menaxhimi i Përdoruesve",
+    pendingApprovals: "Miratimet në Pritje:",
+    approvedUsers: "Përdoruesit e Miratuar:",
+    noPendingApprovals: "Nuk ka miratim në pritje",
+    approve: "Mirato",
+    reject: "Refuzo",
+    remove: "Hiq",
+    userApproved: "Përdoruesi {username} u miratua!",
+    userRejected: "Përdoruesi u refuzua dhe u hoq",
+    userRemoved: "Përdoruesi {username} u hoq",
+    confirmRemoveUser: "Jeni të sigurt që doni të hiqni përgjithmonë përdoruesin {username}? Kjo do të fshijë të gjitha të dhënat e tyre.",
+    cannotRemoveSelf: "Nuk mund të hiqni llogarinë tuaj të administratorit",
+    
+    // Charts
+    monthlyTrends: "Trendet Mujore",
+    expenseCategories: "Kategoritë e Shpenzimeve",
+    incomeVsExpenses: "Të Ardhurat kundrejt Shpenzimeve (6 Muajt e Fundit)",
+    spendingByCategory: "Shpenzimet sipas Kategorisë",
+    
+    // Transactions
+    dateFilter: "Filtri i Datës",
+    clearFilter: "Pastro Filtrin",
+    exportCSV: "Eksporto CSV",
+    exportJSON: "Eksporto JSON",
+    startDate: "Data e Fillimit",
+    endDate: "Data e Mbarimit",
+    filtered: "të filtruara",
+    noTransactionsFound: "Nuk u gjetën transaksione për kriteret e zgjedhura.",
+    editTransaction: "Redakto transaksionin",
+    deleteTransaction: "Fshi transaksionin",
+    editTransactionModal: "Redakto Transaksionin",
+    saveChanges: "Ruaj Ndryshimet",
+    cancel: "Anulo",
+    validDescription: "Ju lutemi futni një përshkrim dhe shumë të vlefshme",
+    confirmDelete: "Jeni të sigurt që doni të fshini këtë transaksion?",
+    
+    // Footer & Misc
+    dataSavedLocally: "Menaxhimi i buxhetit shumë-përdorues • {count} transaksione • Të dhënat ruhen lokalisht",
+    language: "Gjuha",
+    english: "Anglisht",
+    albanian: "Shqip"
+  }
+};
+
 function App() {
+  // Language state
+  const [language, setLanguage] = useState('en');
+  
+  // Translation helper
+  const t = (key, params = {}) => {
+    let text = translations[language][key] || translations.en[key] || key;
+    Object.keys(params).forEach(param => {
+      text = text.replace(`{${param}}`, params[param]);
+    });
+    return text;
+  };
+
   // Authentication state
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -69,9 +310,23 @@ function App() {
 
   // Categories for expenses
   const categories = [
-    'Food', 'Transportation', 'Entertainment', 'Shopping', 'Bills', 
-    'Healthcare', 'Education', 'Travel', 'General'
+    t('food'), t('transportation'), t('entertainment'), t('shopping'), 
+    t('bills'), t('healthcare'), t('education'), t('travel'), t('general')
   ];
+
+  // Load language preference
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('budgetAppLanguage');
+    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'al')) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  // Save language preference
+  const changeLanguage = (newLanguage) => {
+    setLanguage(newLanguage);
+    localStorage.setItem('budgetAppLanguage', newLanguage);
+  };
 
   // Initialize app - check for logged in user
   useEffect(() => {
@@ -101,6 +356,34 @@ function App() {
     localStorage.setItem('budgetUsers', JSON.stringify(users));
   };
 
+  const removeUser = (userEmail) => {
+    if (userEmail === currentUser.email) {
+      alert(t('cannotRemoveSelf'));
+      return;
+    }
+
+    const user = getAllUsers().find(u => u.email === userEmail);
+    if (!user) return;
+
+    if (window.confirm(t('confirmRemoveUser', { username: user.username }))) {
+      // Remove user from users list
+      const users = getAllUsers().filter(u => u.email !== userEmail);
+      localStorage.setItem('budgetUsers', JSON.stringify(users));
+      
+      // Remove user's transaction data
+      const userTransactionKey = getUserTransactionKey(userEmail);
+      localStorage.removeItem(userTransactionKey);
+      
+      // If currently viewing this user's data, switch back to own data
+      if (selectedUserData && selectedUserData.email === userEmail) {
+        setSelectedUserData(null);
+        loadUserTransactions(currentUser.email);
+      }
+      
+      alert(t('userRemoved', { username: user.username }));
+    }
+  };
+
   const getPendingUsers = () => {
     return getAllUsers().filter(user => !user.isApproved && user.email !== ADMIN_EMAIL);
   };
@@ -115,23 +398,23 @@ function App() {
     const { username, email, password, confirmPassword } = signupData;
     
     if (!username || !email || !password || !confirmPassword) {
-      alert('Please fill all fields');
+      alert(t('fillAllFields'));
       return;
     }
     
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      alert(t('passwordsNoMatch'));
       return;
     }
     
     if (password.length < 6) {
-      alert('Password must be at least 6 characters');
+      alert(t('passwordTooShort'));
       return;
     }
     
     const users = getAllUsers();
     if (users.some(user => user.email === email)) {
-      alert('Email already registered');
+      alert(t('emailExists'));
       return;
     }
     
@@ -147,12 +430,12 @@ function App() {
     saveUser(newUser);
     
     if (email === ADMIN_EMAIL) {
-      alert('Admin account created and approved!');
+      alert(t('adminCreated'));
       setCurrentUser(newUser);
       setIsLoggedIn(true);
       localStorage.setItem('currentUser', JSON.stringify(newUser));
     } else {
-      alert('Account created! Please wait for admin approval.');
+      alert(t('accountCreated'));
     }
     
     setSignupData({ username: '', email: '', password: '', confirmPassword: '' });
@@ -164,7 +447,7 @@ function App() {
     const { email, password } = loginData;
     
     if (!email || !password) {
-      alert('Please enter email and password');
+      alert(t('fillAllFields'));
       return;
     }
     
@@ -172,12 +455,12 @@ function App() {
     const user = users.find(u => u.email === email && u.password === password);
     
     if (!user) {
-      alert('Invalid email or password');
+      alert(t('invalidCredentials'));
       return;
     }
     
     if (!user.isApproved && email !== ADMIN_EMAIL) {
-      alert('Your account is pending admin approval');
+      alert(t('pendingApproval'));
       return;
     }
     
@@ -203,15 +486,15 @@ function App() {
     if (user) {
       user.isApproved = true;
       saveUser(user);
-      alert(`User ${user.username} has been approved!`);
+      alert(t('userApproved', { username: user.username }));
     }
   };
 
   const rejectUser = (userEmail) => {
-    if (window.confirm('Are you sure you want to reject this user?')) {
+    if (window.confirm(t('confirmRemoveUser', { username: getAllUsers().find(u => u.email === userEmail)?.username || '' }))) {
       const users = getAllUsers().filter(u => u.email !== userEmail);
       localStorage.setItem('budgetUsers', JSON.stringify(users));
-      alert('User rejected and removed');
+      alert(t('userRejected'));
     }
   };
 
@@ -283,12 +566,12 @@ function App() {
     e.preventDefault();
     
     if (selectedUserData && selectedUserData.email !== currentUser.email) {
-      alert('You can only add transactions to your own budget');
+      alert(t('canOnlyAdd'));
       return;
     }
     
     if (!description.trim() || !amount || parseFloat(amount) <= 0) {
-      alert('Please enter a valid description and amount');
+      alert(t('validDescription'));
       return;
     }
 
@@ -298,7 +581,7 @@ function App() {
       description: description.trim(),
       amount: parseFloat(amount),
       type: type,
-      category: type === 'expense' ? category : 'Income',
+      category: type === 'expense' ? category : t('income'),
       date: now.toLocaleDateString(),
       dateISO: now.toISOString().split('T')[0],
       userId: currentUser.email
@@ -307,13 +590,13 @@ function App() {
     setTransactions([...transactions, newTransaction]);
     setDescription('');
     setAmount('');
-    setCategory('General');
+    setCategory(t('general'));
   };
 
   // Edit transaction (only if viewing own data)
   const startEdit = (transaction) => {
     if (selectedUserData && selectedUserData.email !== currentUser.email) {
-      alert('You can only edit your own transactions');
+      alert(t('canOnlyEdit'));
       return;
     }
     
@@ -326,7 +609,7 @@ function App() {
 
   const saveEdit = () => {
     if (!editDescription.trim() || !editAmount || parseFloat(editAmount) <= 0) {
-      alert('Please enter a valid description and amount');
+      alert(t('validDescription'));
       return;
     }
 
@@ -337,7 +620,7 @@ function App() {
             description: editDescription.trim(),
             amount: parseFloat(editAmount),
             type: editType,
-            category: editType === 'expense' ? editCategory : 'Income'
+            category: editType === 'expense' ? editCategory : t('income')
           }
         : t
     );
@@ -347,7 +630,7 @@ function App() {
     setEditDescription('');
     setEditAmount('');
     setEditType('income');
-    setEditCategory('General');
+    setEditCategory(t('general'));
   };
 
   const cancelEdit = () => {
@@ -355,24 +638,24 @@ function App() {
     setEditDescription('');
     setEditAmount('');
     setEditType('income');
-    setEditCategory('General');
+    setEditCategory(t('general'));
   };
 
   // Delete transaction (only if viewing own data)
   const deleteTransaction = (id) => {
     if (selectedUserData && selectedUserData.email !== currentUser.email) {
-      alert('You can only delete your own transactions');
+      alert(t('canOnlyDelete'));
       return;
     }
     
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
+    if (window.confirm(t('confirmDelete'))) {
       setTransactions(transactions.filter(t => t.id !== id));
     }
   };
 
   // Export data
   const exportToCSV = () => {
-    const headers = ['Date', 'Description', 'Type', 'Category', 'Amount'];
+    const headers = [t('date'), t('description'), t('type'), t('category'), t('amount')];
     const csvContent = [
       headers.join(','),
       ...filteredTransactions.map(t => 
@@ -428,14 +711,14 @@ function App() {
       labels: last6Months.map(month => format(parseISO(month + '-01'), 'MMM yyyy')),
       datasets: [
         {
-          label: 'Income',
+          label: t('income'),
           data: last6Months.map(month => monthlyData[month].income),
           backgroundColor: 'rgba(34, 197, 94, 0.8)',
           borderColor: 'rgba(34, 197, 94, 1)',
           borderWidth: 2
         },
         {
-          label: 'Expenses',
+          label: t('expense'),
           data: last6Months.map(month => monthlyData[month].expenses),
           backgroundColor: 'rgba(239, 68, 68, 0.8)',
           borderColor: 'rgba(239, 68, 68, 1)',
@@ -493,9 +776,35 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-md">
+          {/* Language Selector */}
+          <div className="flex justify-center mb-4">
+            <div className="bg-gray-100 rounded-lg p-1 flex">
+              <button
+                onClick={() => changeLanguage('en')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                  language === 'en' 
+                    ? 'bg-white text-purple-600 shadow' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                🇺🇸 {t('english')}
+              </button>
+              <button
+                onClick={() => changeLanguage('al')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                  language === 'al' 
+                    ? 'bg-white text-purple-600 shadow' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                🇦🇱 {t('albanian')}
+              </button>
+            </div>
+          </div>
+
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">💰 Budget Planner Pro</h1>
-            <p className="text-gray-600">Manage your finances together</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">💰 {t('appTitle')}</h1>
+            <p className="text-gray-600">{t('appSubtitle')}</p>
           </div>
 
           <div className="flex mb-6">
@@ -507,7 +816,7 @@ function App() {
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              Login
+              {t('login')}
             </button>
             <button
               onClick={() => setShowLogin(false)}
@@ -517,31 +826,31 @@ function App() {
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              Sign Up
+              {t('signup')}
             </button>
           </div>
 
           {showLogin ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
                 <input
                   type="email"
                   value={loginData.email}
                   onChange={(e) => setLoginData({...loginData, email: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                  placeholder="Enter your email"
+                  placeholder={t('enterEmail')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('password')}</label>
                 <input
                   type="password"
                   value={loginData.password}
                   onChange={(e) => setLoginData({...loginData, password: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                  placeholder="Enter your password"
+                  placeholder={t('enterPassword')}
                   required
                 />
               </div>
@@ -549,52 +858,52 @@ function App() {
                 type="submit"
                 className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-xl hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
               >
-                Login
+                {t('login')}
               </button>
             </form>
           ) : (
             <form onSubmit={handleSignup} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('username')}</label>
                 <input
                   type="text"
                   value={signupData.username}
                   onChange={(e) => setSignupData({...signupData, username: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                  placeholder="Choose a username"
+                  placeholder={t('chooseUsername')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
                 <input
                   type="email"
                   value={signupData.email}
                   onChange={(e) => setSignupData({...signupData, email: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                  placeholder="Enter your email"
+                  placeholder={t('enterEmail')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('password')}</label>
                 <input
                   type="password"
                   value={signupData.password}
                   onChange={(e) => setSignupData({...signupData, password: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                  placeholder="Create a password"
+                  placeholder={t('createPassword')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('confirmPassword')}</label>
                 <input
                   type="password"
                   value={signupData.confirmPassword}
                   onChange={(e) => setSignupData({...signupData, confirmPassword: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                  placeholder="Confirm your password"
+                  placeholder={t('confirmYourPassword')}
                   required
                 />
               </div>
@@ -602,10 +911,10 @@ function App() {
                 type="submit"
                 className="w-full py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white font-medium rounded-xl hover:from-green-600 hover:to-blue-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
               >
-                Sign Up
+                {t('signup')}
               </button>
               <p className="text-xs text-gray-500 text-center">
-                New accounts require admin approval (except leonard.lamaj@gmail.com)
+                {t('approvalNote')}
               </p>
             </form>
           )}
@@ -622,27 +931,51 @@ function App() {
           <div className="flex flex-wrap items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 mb-1">
-                💰 Budget Planner Pro
+                💰 {t('appTitle')}
               </h1>
               <p className="text-gray-600">
-                Welcome, {currentUser.username}! {selectedUserData && `(Viewing ${selectedUserData.username}'s budget)`}
-                {currentUser.isAdmin && <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 text-xs rounded-full">Admin</span>}
+                {t('welcome')}, {currentUser.username}! {selectedUserData && t('readOnlyMode', { username: selectedUserData.username })}
+                {currentUser.isAdmin && <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 text-xs rounded-full">{t('admin')}</span>}
               </p>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Language Selector */}
+              <div className="bg-gray-100 rounded-lg p-1 flex">
+                <button
+                  onClick={() => changeLanguage('en')}
+                  className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                    language === 'en' 
+                      ? 'bg-white text-purple-600 shadow' 
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  🇺🇸
+                </button>
+                <button
+                  onClick={() => changeLanguage('al')}
+                  className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                    language === 'al' 
+                      ? 'bg-white text-purple-600 shadow' 
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  🇦🇱
+                </button>
+              </div>
+              
               {selectedUserData && (
                 <button
                   onClick={switchToOwnView}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
                 >
-                  My Budget
+                  {t('myBudget')}
                 </button>
               )}
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
               >
-                Logout
+                {t('logout')}
               </button>
             </div>
           </div>
@@ -650,7 +983,7 @@ function App() {
 
         {/* User Selection for All Users */}
         <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">👥 View Other Users' Budgets</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">👥 {t('viewOthersBudgets')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {getApprovedUsers()
               .filter(user => user.email !== currentUser.email)
@@ -668,7 +1001,7 @@ function App() {
                     <div className="text-2xl mb-2">👤</div>
                     <p className="font-medium">{user.username}</p>
                     <p className="text-sm text-gray-500">{user.email}</p>
-                    {user.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Admin</span>}
+                    {user.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">{t('admin')}</span>}
                   </div>
                 </button>
               ))}
@@ -678,36 +1011,64 @@ function App() {
         {/* Admin Panel */}
         {currentUser.isAdmin && (
           <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">🔧 Admin Panel</h2>
-            {getPendingUsers().length > 0 ? (
-              <div className="space-y-3">
-                <h3 className="font-medium text-gray-700">Pending Approvals:</h3>
-                {getPendingUsers().map(user => (
-                  <div key={user.email} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div>
-                      <p className="font-medium">{user.username}</p>
-                      <p className="text-sm text-gray-600">{user.email}</p>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">🔧 {t('adminPanel')}</h2>
+            
+            {/* Pending Approvals */}
+            <div className="mb-6">
+              <h3 className="font-medium text-gray-700 mb-3">{t('pendingApprovals')}</h3>
+              {getPendingUsers().length > 0 ? (
+                <div className="space-y-3">
+                  {getPendingUsers().map(user => (
+                    <div key={user.email} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <div>
+                        <p className="font-medium">{user.username}</p>
+                        <p className="text-sm text-gray-600">{user.email}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => approveUser(user.email)}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
+                        >
+                          {t('approve')}
+                        </button>
+                        <button
+                          onClick={() => rejectUser(user.email)}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                        >
+                          {t('reject')}
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex space-x-2">
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">{t('noPendingApprovals')}</p>
+              )}
+            </div>
+
+            {/* Approved Users Management */}
+            <div>
+              <h3 className="font-medium text-gray-700 mb-3">{t('approvedUsers')}</h3>
+              <div className="space-y-3">
+                {getApprovedUsers()
+                  .filter(user => user.email !== currentUser.email) // Don't show self
+                  .map(user => (
+                    <div key={user.email} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div>
+                        <p className="font-medium">{user.username}</p>
+                        <p className="text-sm text-gray-600">{user.email}</p>
+                        {user.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">{t('admin')}</span>}
+                      </div>
                       <button
-                        onClick={() => approveUser(user.email)}
-                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => rejectUser(user.email)}
+                        onClick={() => removeUser(user.email)}
                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
                       >
-                        Reject
+                        {t('remove')}
                       </button>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
-            ) : (
-              <p className="text-gray-500">No pending approvals</p>
-            )}
+            </div>
           </div>
         )}
 
@@ -721,7 +1082,7 @@ function App() {
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            📊 Dashboard
+            📊 {t('dashboard')}
           </button>
           <button
             onClick={() => setActiveTab('charts')}
@@ -731,7 +1092,7 @@ function App() {
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            📈 Charts
+            📈 {t('charts')}
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
@@ -741,7 +1102,7 @@ function App() {
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            📋 Transactions
+            📋 {t('transactions')}
           </button>
         </div>
 
@@ -754,7 +1115,7 @@ function App() {
               <div className="bg-green-100 rounded-2xl p-6 shadow-lg border border-green-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-600 text-sm font-medium">Total Income</p>
+                    <p className="text-green-600 text-sm font-medium">{t('totalIncome')}</p>
                     <p className="text-2xl font-bold text-green-800">${totalIncome.toFixed(2)}</p>
                   </div>
                   <div className="bg-green-200 p-3 rounded-full">
@@ -769,7 +1130,7 @@ function App() {
               <div className="bg-red-100 rounded-2xl p-6 shadow-lg border border-red-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-red-600 text-sm font-medium">Total Expenses</p>
+                    <p className="text-red-600 text-sm font-medium">{t('totalExpenses')}</p>
                     <p className="text-2xl font-bold text-red-800">${totalExpenses.toFixed(2)}</p>
                   </div>
                   <div className="bg-red-200 p-3 rounded-full">
@@ -784,7 +1145,7 @@ function App() {
               <div className={`${netBalance >= 0 ? 'bg-blue-100 border-blue-200' : 'bg-orange-100 border-orange-200'} rounded-2xl p-6 shadow-lg border`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`${netBalance >= 0 ? 'text-blue-600' : 'text-orange-600'} text-sm font-medium`}>Net Balance</p>
+                    <p className={`${netBalance >= 0 ? 'text-blue-600' : 'text-orange-600'} text-sm font-medium`}>{t('netBalance')}</p>
                     <p className={`text-2xl font-bold ${netBalance >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
                       {netBalance >= 0 ? '+' : ''}${netBalance.toFixed(2)}
                     </p>
@@ -801,22 +1162,22 @@ function App() {
             {/* Add Transaction Form - Only show if viewing own data */}
             {(!selectedUserData || selectedUserData.email === currentUser.email) && (
               <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Add New Transaction</h2>
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('addNewTransaction')}</h2>
                 <form onSubmit={addTransaction} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('description')}</label>
                       <input
                         type="text"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Enter description"
+                        placeholder={t('enterDescription')}
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('amount')}</label>
                       <input
                         type="number"
                         step="0.01"
@@ -831,26 +1192,26 @@ function App() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('type')}</label>
                       <select
                         value={type}
                         onChange={(e) => setType(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                       >
-                        <option value="income">💰 Income</option>
-                        <option value="expense">💸 Expense</option>
+                        <option value="income">💰 {t('income')}</option>
+                        <option value="expense">💸 {t('expense')}</option>
                       </select>
                     </div>
                     {type === 'expense' && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('category')}</label>
                         <select
                           value={category}
                           onChange={(e) => setCategory(e.target.value)}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                         >
-                          {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
+                          {categories.map((cat, index) => (
+                            <option key={index} value={cat}>{cat}</option>
                           ))}
                         </select>
                       </div>
@@ -861,7 +1222,7 @@ function App() {
                       type="submit"
                       className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-xl hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
                     >
-                      Add Transaction
+                      {t('addTransaction')}
                     </button>
                   </div>
                 </form>
@@ -871,7 +1232,7 @@ function App() {
             {/* Read-only message for viewing others' data */}
             {selectedUserData && selectedUserData.email !== currentUser.email && (
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-8 text-center">
-                <p className="text-blue-800">👀 You are viewing {selectedUserData.username}'s budget (read-only)</p>
+                <p className="text-blue-800">👀 {t('readOnlyMode', { username: selectedUserData.username })}</p>
               </div>
             )}
           </>
@@ -882,7 +1243,7 @@ function App() {
           <div className="space-y-8">
             {/* Monthly Trends Chart */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">📈 Monthly Trends</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">📈 {t('monthlyTrends')}</h2>
               <div className="h-80">
                 <Bar 
                   data={getMonthlyData()} 
@@ -895,7 +1256,7 @@ function App() {
                       },
                       title: {
                         display: true,
-                        text: 'Income vs Expenses (Last 6 Months)'
+                        text: t('incomeVsExpenses')
                       }
                     },
                     scales: {
@@ -916,7 +1277,7 @@ function App() {
             {/* Category Breakdown */}
             {filteredTransactions.filter(t => t.type === 'expense').length > 0 && (
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">🍰 Expense Categories</h2>
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">🍰 {t('expenseCategories')}</h2>
                 <div className="h-80">
                   <Doughnut 
                     data={getCategoryData()} 
@@ -929,7 +1290,7 @@ function App() {
                         },
                         title: {
                           display: true,
-                          text: 'Spending by Category'
+                          text: t('spendingByCategory')
                         }
                       }
                     }} 
@@ -951,7 +1312,7 @@ function App() {
                     onClick={() => setShowDateFilter(!showDateFilter)}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
                   >
-                    📅 Date Filter
+                    📅 {t('dateFilter')}
                   </button>
                   
                   {(startDate || endDate) && (
@@ -959,7 +1320,7 @@ function App() {
                       onClick={clearDateFilter}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all"
                     >
-                      Clear Filter
+                      {t('clearFilter')}
                     </button>
                   )}
                 </div>
@@ -969,13 +1330,13 @@ function App() {
                     onClick={exportToCSV}
                     className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
                   >
-                    📊 Export CSV
+                    📊 {t('exportCSV')}
                   </button>
                   <button
                     onClick={exportToJSON}
                     className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all"
                   >
-                    📄 Export JSON
+                    📄 {t('exportJSON')}
                   </button>
                 </div>
               </div>
@@ -985,7 +1346,7 @@ function App() {
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('startDate')}</label>
                       <input
                         type="date"
                         value={startDate}
@@ -994,7 +1355,7 @@ function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('endDate')}</label>
                       <input
                         type="date"
                         value={endDate}
@@ -1010,13 +1371,13 @@ function App() {
             {/* Transaction List */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                📋 Transactions {(startDate || endDate) && `(${filteredTransactions.length} filtered)`}
+                📋 {t('transactions')} {(startDate || endDate) && `(${filteredTransactions.length} ${t('filtered')})`}
               </h2>
               
               {filteredTransactions.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-gray-400 text-6xl mb-4">📊</div>
-                  <p className="text-gray-500">No transactions found for the selected criteria.</p>
+                  <p className="text-gray-500">{t('noTransactionsFound')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1065,7 +1426,7 @@ function App() {
                             <button
                               onClick={() => startEdit(transaction)}
                               className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 transition-all"
-                              title="Edit transaction"
+                              title={t('editTransaction')}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1074,7 +1435,7 @@ function App() {
                             <button
                               onClick={() => deleteTransaction(transaction.id)}
                               className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 transition-all"
-                              title="Delete transaction"
+                              title={t('deleteTransaction')}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1095,10 +1456,10 @@ function App() {
         {editingTransaction && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">✏️ Edit Transaction</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">✏️ {t('editTransactionModal')}</h2>
               <form onSubmit={(e) => { e.preventDefault(); saveEdit(); }} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('description')}</label>
                   <input
                     type="text"
                     value={editDescription}
@@ -1108,7 +1469,7 @@ function App() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('amount')}</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1120,26 +1481,26 @@ function App() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('type')}</label>
                   <select
                     value={editType}
                     onChange={(e) => setEditType(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                   >
-                    <option value="income">💰 Income</option>
-                    <option value="expense">💸 Expense</option>
+                    <option value="income">💰 {t('income')}</option>
+                    <option value="expense">💸 {t('expense')}</option>
                   </select>
                 </div>
                 {editType === 'expense' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('category')}</label>
                     <select
                       value={editCategory}
                       onChange={(e) => setEditCategory(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                     >
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                      {categories.map((cat, index) => (
+                        <option key={index} value={cat}>{cat}</option>
                       ))}
                     </select>
                   </div>
@@ -1150,13 +1511,13 @@ function App() {
                     onClick={cancelEdit}
                     className="flex-1 px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button
                     type="submit"
                     className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all"
                   >
-                    Save Changes
+                    {t('saveChanges')}
                   </button>
                 </div>
               </form>
@@ -1166,7 +1527,7 @@ function App() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
-          <p>Multi-user budget management • {transactions.length} transactions • Data saved locally</p>
+          <p>{t('dataSavedLocally', { count: transactions.length })}</p>
         </div>
       </div>
     </div>
