@@ -21,6 +21,7 @@ import { useAuth } from './hooks/useAuth';
 import { useFirestore, firestoreService } from './hooks/useFirestore';
 import { doc, updateDoc, deleteDoc, collection, query, getDocs } from 'firebase/firestore';
 import { db } from './firebase-config';
+import { clearAllData } from './utils/resetData';
 
 // Register Chart.js components
 ChartJS.register(
@@ -84,6 +85,12 @@ const translations = {
     confirmNewPasswordPlaceholder: "Confirm new password",
     profile: "Profile",
     accountSettings: "Account Settings",
+    
+    // Reset functionality
+    resetApp: "Reset App",
+    confirmReset: "Are you sure you want to reset ALL data? This will delete all users and transactions permanently!",
+    resetComplete: "App reset successfully! Please refresh the page.",
+    resetFailed: "Reset failed. Please try again.",
     
     // Navigation
     dashboard: "Dashboard",
@@ -221,6 +228,12 @@ const translations = {
     confirmNewPasswordPlaceholder: "Konfirmoni fjalëkalimin e ri",
     profile: "Profili",
     accountSettings: "Cilësimet e Llogarisë",
+    
+    // Reset functionality
+    resetApp: "Rivendos Aplikacionin",
+    confirmReset: "Jeni të sigurt që doni të rivendosni TË GJITHA të dhënat? Kjo do të fshijë të gjithë përdoruesit dhe transaksionet përgjithmonë!",
+    resetComplete: "Aplikacioni u rivendos me sukses! Ju lutemi rifreskoni faqen.",
+    resetFailed: "Rivendosja dështoi. Ju lutemi provoni përsëri.",
     
     // Navigation
     dashboard: "Paneli",
@@ -420,6 +433,25 @@ function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Reset all data function
+  const handleResetApp = async () => {
+    if (window.confirm(t('confirmReset'))) {
+      try {
+        await logOut(); // Logout first
+        const success = await clearAllData();
+        if (success) {
+          alert(t('resetComplete'));
+          window.location.reload(); // Refresh the page
+        } else {
+          alert(t('resetFailed'));
+        }
+      } catch (error) {
+        console.error('Reset error:', error);
+        alert(t('resetFailed'));
+      }
+    }
+  };
 
   // User management functions
   const getPendingUsers = () => {
@@ -937,6 +969,17 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-md">
+          {/* Reset App Button for Development */}
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={handleResetApp}
+              className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-all"
+              title="Reset all data - Development only"
+            >
+              🗑️ {t('resetApp')}
+            </button>
+          </div>
+
           {/* Language Selector - LARGE AND VISIBLE */}
           <div className="flex justify-center mb-6">
             <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-3 flex border-2 border-purple-200">
@@ -1218,6 +1261,11 @@ function App() {
                   </div>
                 </button>
               ))}
+            {getApprovedUsers().filter(userData => userData.uid !== user.uid).length === 0 && (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                <p>No other users yet. Share the app with others!</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1329,7 +1377,7 @@ function App() {
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
                   <div className="text-4xl mb-2">👤</div>
                   <p className="text-gray-500 font-medium">No other users to manage</p>
-                  <p className="text-gray-400 text-sm">Create test users to see the remove functionality</p>
+                  <p className="text-gray-400 text-sm">Share the app with others to see users here</p>
                 </div>
               )}
             </div>
