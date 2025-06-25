@@ -1372,6 +1372,36 @@ function App() {
                 </div>
               )}
             </div>
+
+            {/* Reset App Section - HIGHLY VISIBLE */}
+            <div className="bg-white rounded-xl p-4 border-l-4 border-red-600 mt-6">
+              <h3 className="text-lg font-bold text-red-800 mb-3 flex items-center">
+                🗑️ {t('resetApp')} - DANGER ZONE
+                <span className="ml-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">
+                  DESTRUCTIVE
+                </span>
+              </h3>
+              
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <p className="text-red-800 text-sm font-medium flex items-center">
+                  ⚠️ <strong className="ml-1">CRITICAL WARNING:</strong> 
+                  <span className="ml-1">This will permanently delete ALL users, transactions, and data in the entire application!</span>
+                </p>
+                <p className="text-red-700 text-xs mt-2">
+                  This action cannot be undone. Use only for complete system reset.
+                </p>
+              </div>
+              
+              <div className="flex justify-center">
+                <button
+                  onClick={handleResetApp}
+                  className="px-8 py-4 bg-red-600 text-white text-lg font-bold rounded-lg hover:bg-red-700 transition-all shadow-lg transform hover:scale-105 border-2 border-red-700"
+                  title="Reset all application data - ADMIN ONLY"
+                >
+                  🗑️ {t('resetApp')} - DELETE ALL DATA
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
