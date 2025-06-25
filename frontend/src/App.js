@@ -14,6 +14,13 @@ import {
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { where, orderBy } from 'firebase/firestore';
+
+// Firebase imports
+import { useAuth } from './hooks/useAuth';
+import { useFirestore, firestoreService } from './hooks/useFirestore';
+import { doc, updateDoc, deleteDoc, collection, query, getDocs } from 'firebase/firestore';
+import { db } from './firebase-config';
 
 // Register Chart.js components
 ChartJS.register(
@@ -128,7 +135,7 @@ const translations = {
     endDate: "End Date",
     filtered: "filtered",
     noTransactionsFound: "No transactions found for the selected criteria.",
-    editTransaction: "Edit Transaction",
+    editTransaction: "Edit transaction",
     deleteTransaction: "Delete transaction",
     editTransactionModal: "Edit Transaction",
     saveChanges: "Save Changes",
@@ -137,10 +144,16 @@ const translations = {
     confirmDelete: "Are you sure you want to delete this transaction?",
     
     // Footer & Misc
-    dataSavedLocally: "Multi-user budget management • {count} transactions • Data saved locally",
+    dataSavedLocally: "Cloud synchronized • {count} transactions • Data synced across devices",
     language: "Language",
     english: "English",
-    albanian: "Albanian"
+    albanian: "Albanian",
+    
+    // Cloud sync status
+    online: "Online - Data syncing",
+    offline: "Offline - Using cached data",
+    syncing: "Syncing data...",
+    syncError: "Sync error - Check connection"
   },
   
   al: {
@@ -250,14 +263,23 @@ const translations = {
     confirmDelete: "Jeni të sigurt që doni të fshini këtë transaksion?",
     
     // Footer & Misc
-    dataSavedLocally: "Menaxhimi i buxhetit shumë-përdorues • {count} transaksione • Të dhënat ruhen lokalisht",
+    dataSavedLocally: "Sinkronizuar në re • {count} transaksione • Të dhënat sinkronizuar në të gjitha pajisjet",
     language: "Gjuha",
     english: "Anglisht",
-    albanian: "Shqip"
+    albanian: "Shqip",
+    
+    // Cloud sync status
+    online: "Online - Duke sinkronizuar të dhënat",
+    offline: "Offline - Duke përdorur të dhënat e ruajtura",
+    syncing: "Duke sinkronizuar të dhënat...",
+    syncError: "Gabim sinkronizimi - Kontrolloni lidhjen"
   }
 };
 
 function App() {
+  // Firebase authentication
+  const { user, userProfile, loading, signUp, signIn, logOut } = useAuth();
+  
   // Language state
   const [language, setLanguage] = useState('en');
   
@@ -271,8 +293,6 @@ function App() {
   };
 
   // Authentication state
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(true);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ 
@@ -286,7 +306,6 @@ function App() {
   const ADMIN_EMAIL = 'leonard.lamaj@gmail.com';
   
   // State for transactions
-  const [transactions, setTransactions] = useState([]);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('income');
@@ -307,6 +326,15 @@ function App() {
   // View state
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedUserData, setSelectedUserData] = useState(null);
+  const [onlineStatus, setOnlineStatus] = useState(navigator.onLine);
+
+  // Firebase data hooks
+  const { data: allUsers } = useFirestore('users');
+  const { data: allTransactions } = useFirestore('transactions', [], 'createdAt');
+  
+  // Filter transactions for current user or selected user
+  const currentUserId = selectedUserData ? selectedUserData.uid : user?.uid;
+  const userTransactions = allTransactions.filter(t => t.userId === currentUserId);
 
   // Categories for expenses
   const categories = [
@@ -314,86 +342,52 @@ function App() {
     t('bills'), t('healthcare'), t('education'), t('travel'), t('general')
   ];
 
-  // Load language preference
+  // Load language preference from userProfile
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('budgetAppLanguage');
-    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'al')) {
-      setLanguage(savedLanguage);
+    if (userProfile?.language) {
+      setLanguage(userProfile.language);
     }
-  }, []);
+  }, [userProfile]);
 
-  // Save language preference
-  const changeLanguage = (newLanguage) => {
+  // Save language preference to Firebase
+  const changeLanguage = async (newLanguage) => {
     setLanguage(newLanguage);
-    localStorage.setItem('budgetAppLanguage', newLanguage);
+    if (user && userProfile) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), {
+          language: newLanguage
+        });
+      } catch (error) {
+        console.error('Error updating language:', error);
+      }
+    }
   };
 
-  // Initialize app - check for logged in user
+  // Online status monitoring
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      setCurrentUser(user);
-      setIsLoggedIn(true);
-      loadUserTransactions(user.email);
-    }
+    const handleOnline = () => setOnlineStatus(true);
+    const handleOffline = () => setOnlineStatus(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // User management functions
-  const getAllUsers = () => {
-    const users = localStorage.getItem('budgetUsers');
-    return users ? JSON.parse(users) : [];
-  };
-
-  const saveUser = (user) => {
-    const users = getAllUsers();
-    const existingIndex = users.findIndex(u => u.email === user.email);
-    if (existingIndex >= 0) {
-      users[existingIndex] = user;
-    } else {
-      users.push(user);
-    }
-    localStorage.setItem('budgetUsers', JSON.stringify(users));
-  };
-
-  const removeUser = (userEmail) => {
-    if (userEmail === currentUser.email) {
-      alert(t('cannotRemoveSelf'));
-      return;
-    }
-
-    const user = getAllUsers().find(u => u.email === userEmail);
-    if (!user) return;
-
-    if (window.confirm(t('confirmRemoveUser', { username: user.username }))) {
-      // Remove user from users list
-      const users = getAllUsers().filter(u => u.email !== userEmail);
-      localStorage.setItem('budgetUsers', JSON.stringify(users));
-      
-      // Remove user's transaction data
-      const userTransactionKey = getUserTransactionKey(userEmail);
-      localStorage.removeItem(userTransactionKey);
-      
-      // If currently viewing this user's data, switch back to own data
-      if (selectedUserData && selectedUserData.email === userEmail) {
-        setSelectedUserData(null);
-        loadUserTransactions(currentUser.email);
-      }
-      
-      alert(t('userRemoved', { username: user.username }));
-    }
-  };
-
   const getPendingUsers = () => {
-    return getAllUsers().filter(user => !user.isApproved && user.email !== ADMIN_EMAIL);
+    return allUsers.filter(user => !user.isApproved && user.email !== ADMIN_EMAIL);
   };
 
   const getApprovedUsers = () => {
-    return getAllUsers().filter(user => user.isApproved || user.email === ADMIN_EMAIL);
+    return allUsers.filter(user => user.isApproved || user.email === ADMIN_EMAIL);
   };
 
   // Authentication functions
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     const { username, email, password, confirmPassword } = signupData;
     
@@ -412,37 +406,27 @@ function App() {
       return;
     }
     
-    const users = getAllUsers();
-    if (users.some(user => user.email === email)) {
-      alert(t('emailExists'));
-      return;
+    try {
+      await signUp(email, password, username);
+      
+      if (email === ADMIN_EMAIL) {
+        alert(t('adminCreated'));
+      } else {
+        alert(t('accountCreated'));
+      }
+      
+      setSignupData({ username: '', email: '', password: '', confirmPassword: '' });
+      setShowLogin(true);
+    } catch (error) {
+      if (error.code === 'auth/email-already-in-use') {
+        alert(t('emailExists'));
+      } else {
+        alert(error.message);
+      }
     }
-    
-    const newUser = {
-      username,
-      email,
-      password, // In real app, this would be hashed
-      isApproved: email === ADMIN_EMAIL, // Auto-approve admin
-      isAdmin: email === ADMIN_EMAIL,
-      createdAt: new Date().toISOString()
-    };
-    
-    saveUser(newUser);
-    
-    if (email === ADMIN_EMAIL) {
-      alert(t('adminCreated'));
-      setCurrentUser(newUser);
-      setIsLoggedIn(true);
-      localStorage.setItem('currentUser', JSON.stringify(newUser));
-    } else {
-      alert(t('accountCreated'));
-    }
-    
-    setSignupData({ username: '', email: '', password: '', confirmPassword: '' });
-    setShowLogin(true);
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     const { email, password } = loginData;
     
@@ -451,88 +435,103 @@ function App() {
       return;
     }
     
-    const users = getAllUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (!user) {
-      alert(t('invalidCredentials'));
-      return;
+    try {
+      await signIn(email, password);
+      setLoginData({ email: '', password: '' });
+    } catch (error) {
+      if (error.message === 'Account pending approval') {
+        alert(t('pendingApproval'));
+      } else {
+        alert(t('invalidCredentials'));
+      }
     }
-    
-    if (!user.isApproved && email !== ADMIN_EMAIL) {
-      alert(t('pendingApproval'));
-      return;
-    }
-    
-    setCurrentUser(user);
-    setIsLoggedIn(true);
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    loadUserTransactions(email);
-    setLoginData({ email: '', password: '' });
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setIsLoggedIn(false);
-    setTransactions([]);
-    setSelectedUserData(null);
-    localStorage.removeItem('currentUser');
-    setActiveTab('dashboard');
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      setSelectedUserData(null);
+      setActiveTab('dashboard');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
-  const approveUser = (userEmail) => {
-    const users = getAllUsers();
-    const user = users.find(u => u.email === userEmail);
-    if (user) {
-      user.isApproved = true;
-      saveUser(user);
+  const approveUser = async (userId) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        isApproved: true
+      });
+      const user = allUsers.find(u => u.uid === userId);
       alert(t('userApproved', { username: user.username }));
+    } catch (error) {
+      console.error('Error approving user:', error);
     }
   };
 
-  const rejectUser = (userEmail) => {
-    if (window.confirm(t('confirmRemoveUser', { username: getAllUsers().find(u => u.email === userEmail)?.username || '' }))) {
-      const users = getAllUsers().filter(u => u.email !== userEmail);
-      localStorage.setItem('budgetUsers', JSON.stringify(users));
-      alert(t('userRejected'));
+  const rejectUser = async (userId) => {
+    try {
+      const user = allUsers.find(u => u.uid === userId);
+      if (window.confirm(t('confirmRemoveUser', { username: user.username }))) {
+        // Delete user document
+        await deleteDoc(doc(db, 'users', userId));
+        
+        // Delete user's transactions
+        const userTransactionsQuery = query(
+          collection(db, 'transactions'),
+          where('userId', '==', userId)
+        );
+        const snapshot = await getDocs(userTransactionsQuery);
+        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        
+        alert(t('userRejected'));
+      }
+    } catch (error) {
+      console.error('Error rejecting user:', error);
     }
   };
 
-  // Transaction management with user separation
-  const getUserTransactionKey = (email) => `budgetTransactions_${email}`;
-
-  const loadUserTransactions = (email) => {
-    const key = getUserTransactionKey(email);
-    const saved = localStorage.getItem(key);
-    const userTransactions = saved ? JSON.parse(saved) : [];
-    setTransactions(userTransactions);
-  };
-
-  const saveUserTransactions = (email, transactions) => {
-    const key = getUserTransactionKey(email);
-    localStorage.setItem(key, JSON.stringify(transactions));
-  };
-
-  // Load transactions when user changes
-  useEffect(() => {
-    if (currentUser) {
-      const viewingUser = selectedUserData || currentUser;
-      loadUserTransactions(viewingUser.email);
+  const removeUser = async (userId) => {
+    if (userId === user.uid) {
+      alert(t('cannotRemoveSelf'));
+      return;
     }
-  }, [currentUser, selectedUserData]);
 
-  // Save transactions when they change (only if viewing own data)
-  useEffect(() => {
-    if (currentUser && (!selectedUserData || selectedUserData.email === currentUser.email)) {
-      saveUserTransactions(currentUser.email, transactions);
+    try {
+      const userToRemove = allUsers.find(u => u.uid === userId);
+      if (!userToRemove) return;
+
+      if (window.confirm(t('confirmRemoveUser', { username: userToRemove.username }))) {
+        // Delete user document
+        await deleteDoc(doc(db, 'users', userId));
+        
+        // Delete user's transactions
+        const userTransactionsQuery = query(
+          collection(db, 'transactions'),
+          where('userId', '==', userId)
+        );
+        const snapshot = await getDocs(userTransactionsQuery);
+        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        
+        // If currently viewing this user's data, switch back to own data
+        if (selectedUserData && selectedUserData.uid === userId) {
+          setSelectedUserData(null);
+        }
+        
+        alert(t('userRemoved', { username: userToRemove.username }));
+      }
+    } catch (error) {
+      console.error('Error removing user:', error);
     }
-  }, [transactions, currentUser, selectedUserData]);
+  };
 
   // Filter transactions by date range
   const getFilteredTransactions = () => {
-    if (!startDate && !endDate) return transactions;
+    if (!startDate && !endDate) return userTransactions;
     
-    return transactions.filter(transaction => {
+    return userTransactions.filter(transaction => {
       const transactionDate = parseISO(transaction.dateISO);
       if (startDate && endDate) {
         return isWithinInterval(transactionDate, {
@@ -562,10 +561,10 @@ function App() {
   const netBalance = totalIncome - totalExpenses;
 
   // Add new transaction (only if viewing own data)
-  const addTransaction = (e) => {
+  const addTransaction = async (e) => {
     e.preventDefault();
     
-    if (selectedUserData && selectedUserData.email !== currentUser.email) {
+    if (selectedUserData && selectedUserData.uid !== user.uid) {
       alert(t('canOnlyAdd'));
       return;
     }
@@ -575,27 +574,31 @@ function App() {
       return;
     }
 
-    const now = new Date();
-    const newTransaction = {
-      id: Date.now(),
-      description: description.trim(),
-      amount: parseFloat(amount),
-      type: type,
-      category: type === 'expense' ? category : t('income'),
-      date: now.toLocaleDateString(),
-      dateISO: now.toISOString().split('T')[0],
-      userId: currentUser.email
-    };
+    try {
+      const now = new Date();
+      const transactionData = {
+        description: description.trim(),
+        amount: parseFloat(amount),
+        type: type,
+        category: type === 'expense' ? category : t('income'),
+        date: now.toLocaleDateString(),
+        dateISO: now.toISOString().split('T')[0],
+        userId: user.uid
+      };
 
-    setTransactions([...transactions, newTransaction]);
-    setDescription('');
-    setAmount('');
-    setCategory(t('general'));
+      await firestoreService.add('transactions', transactionData);
+      
+      setDescription('');
+      setAmount('');
+      setCategory(t('general'));
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+    }
   };
 
   // Edit transaction (only if viewing own data)
   const startEdit = (transaction) => {
-    if (selectedUserData && selectedUserData.email !== currentUser.email) {
+    if (selectedUserData && selectedUserData.uid !== user.uid) {
       alert(t('canOnlyEdit'));
       return;
     }
@@ -607,30 +610,30 @@ function App() {
     setEditCategory(transaction.category);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editDescription.trim() || !editAmount || parseFloat(editAmount) <= 0) {
       alert(t('validDescription'));
       return;
     }
 
-    const updatedTransactions = transactions.map(t => 
-      t.id === editingTransaction.id 
-        ? {
-            ...t,
-            description: editDescription.trim(),
-            amount: parseFloat(editAmount),
-            type: editType,
-            category: editType === 'expense' ? editCategory : t('income')
-          }
-        : t
-    );
+    try {
+      const updateData = {
+        description: editDescription.trim(),
+        amount: parseFloat(editAmount),
+        type: editType,
+        category: editType === 'expense' ? editCategory : t('income')
+      };
 
-    setTransactions(updatedTransactions);
-    setEditingTransaction(null);
-    setEditDescription('');
-    setEditAmount('');
-    setEditType('income');
-    setEditCategory(t('general'));
+      await firestoreService.update('transactions', editingTransaction.id, updateData);
+      
+      setEditingTransaction(null);
+      setEditDescription('');
+      setEditAmount('');
+      setEditType('income');
+      setEditCategory(t('general'));
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+    }
   };
 
   const cancelEdit = () => {
@@ -642,14 +645,18 @@ function App() {
   };
 
   // Delete transaction (only if viewing own data)
-  const deleteTransaction = (id) => {
-    if (selectedUserData && selectedUserData.email !== currentUser.email) {
+  const deleteTransaction = async (transactionId) => {
+    if (selectedUserData && selectedUserData.uid !== user.uid) {
       alert(t('canOnlyDelete'));
       return;
     }
     
     if (window.confirm(t('confirmDelete'))) {
-      setTransactions(transactions.filter(t => t.id !== id));
+      try {
+        await firestoreService.delete('transactions', transactionId);
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+      }
     }
   };
 
@@ -667,7 +674,7 @@ function App() {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const userName = selectedUserData ? selectedUserData.username : currentUser.username;
+    const userName = selectedUserData ? selectedUserData.username : userProfile.username;
     link.download = `budget-${userName}-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     window.URL.revokeObjectURL(url);
@@ -679,7 +686,7 @@ function App() {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const userName = selectedUserData ? selectedUserData.username : currentUser.username;
+    const userName = selectedUserData ? selectedUserData.username : userProfile.username;
     link.download = `budget-${userName}-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     window.URL.revokeObjectURL(url);
@@ -689,7 +696,7 @@ function App() {
   const getMonthlyData = () => {
     const monthlyData = {};
     
-    transactions.forEach(transaction => {
+    userTransactions.forEach(transaction => {
       const date = parseISO(transaction.dateISO);
       const monthKey = format(date, 'yyyy-MM');
       
@@ -761,8 +768,8 @@ function App() {
     setShowDateFilter(false);
   };
 
-  const switchToUserView = (user) => {
-    setSelectedUserData(user);
+  const switchToUserView = (userData) => {
+    setSelectedUserData(userData);
     setActiveTab('dashboard');
   };
 
@@ -771,8 +778,20 @@ function App() {
     setActiveTab('dashboard');
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Login/Signup UI
-  if (!isLoggedIn) {
+  if (!user || !userProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-md">
@@ -805,6 +824,13 @@ function App() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">💰 {t('appTitle')}</h1>
             <p className="text-gray-600">{t('appSubtitle')}</p>
+            
+            {/* Connection Status */}
+            <div className={`mt-2 text-xs px-3 py-1 rounded-full inline-block ${
+              onlineStatus ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+            }`}>
+              {onlineStatus ? t('online') : t('offline')}
+            </div>
           </div>
 
           <div className="flex mb-6">
@@ -923,6 +949,25 @@ function App() {
     );
   }
 
+  // Check if user is approved
+  if (!userProfile.isApproved && userProfile.email !== ADMIN_EMAIL) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-md text-center">
+          <div className="text-yellow-500 text-6xl mb-4">⏳</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Account Pending</h2>
+          <p className="text-gray-600 mb-6">{t('pendingApproval')}</p>
+          <button
+            onClick={handleLogout}
+            className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+          >
+            {t('logout')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
       <div className="container mx-auto px-4 py-8">
@@ -934,9 +979,16 @@ function App() {
                 💰 {t('appTitle')}
               </h1>
               <p className="text-gray-600">
-                {t('welcome')}, {currentUser.username}! {selectedUserData && t('readOnlyMode', { username: selectedUserData.username })}
-                {currentUser.isAdmin && <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 text-xs rounded-full">{t('admin')}</span>}
+                {t('welcome')}, {userProfile.username}! {selectedUserData && t('readOnlyMode', { username: selectedUserData.username })}
+                {userProfile.isAdmin && <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 text-xs rounded-full">{t('admin')}</span>}
               </p>
+              
+              {/* Connection Status */}
+              <div className={`mt-1 text-xs px-2 py-1 rounded-full inline-block ${
+                onlineStatus ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+              }`}>
+                {onlineStatus ? t('online') : t('offline')}
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               {/* Language Selector - LARGE AND VISIBLE */}
@@ -986,22 +1038,22 @@ function App() {
           <h2 className="text-xl font-semibold text-gray-800 mb-4">👥 {t('viewOthersBudgets')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {getApprovedUsers()
-              .filter(user => user.email !== currentUser.email)
-              .map(user => (
+              .filter(userData => userData.uid !== user.uid)
+              .map(userData => (
                 <button
-                  key={user.email}
-                  onClick={() => switchToUserView(user)}
+                  key={userData.uid}
+                  onClick={() => switchToUserView(userData)}
                   className={`p-4 rounded-xl border-2 transition-all ${
-                    selectedUserData?.email === user.email
+                    selectedUserData?.uid === userData.uid
                       ? 'border-purple-500 bg-purple-50'
                       : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
                   }`}
                 >
                   <div className="text-center">
                     <div className="text-2xl mb-2">👤</div>
-                    <p className="font-medium">{user.username}</p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
-                    {user.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">{t('admin')}</span>}
+                    <p className="font-medium">{userData.username}</p>
+                    <p className="text-sm text-gray-500">{userData.email}</p>
+                    {userData.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">{t('admin')}</span>}
                   </div>
                 </button>
               ))}
@@ -1009,7 +1061,7 @@ function App() {
         </div>
 
         {/* Admin Panel - ENHANCED VISIBILITY */}
-        {currentUser.isAdmin && (
+        {userProfile.isAdmin && (
           <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-6 shadow-lg mb-8 border-2 border-red-200">
             <div className="flex items-center mb-4">
               <div className="bg-red-500 text-white p-2 rounded-full mr-3">
@@ -1034,22 +1086,22 @@ function App() {
               </h3>
               {getPendingUsers().length > 0 ? (
                 <div className="space-y-3">
-                  {getPendingUsers().map(user => (
-                    <div key={user.email} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  {getPendingUsers().map(userData => (
+                    <div key={userData.uid} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                       <div>
-                        <p className="font-bold text-gray-800">{user.username}</p>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        <p className="text-xs text-gray-500">Created: {new Date(user.createdAt).toLocaleDateString()}</p>
+                        <p className="font-bold text-gray-800">{userData.username}</p>
+                        <p className="text-sm text-gray-600">{userData.email}</p>
+                        <p className="text-xs text-gray-500">Created: {new Date(userData.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => approveUser(user.email)}
+                          onClick={() => approveUser(userData.uid)}
                           className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all font-medium shadow-lg"
                         >
                           ✅ {t('approve')}
                         </button>
                         <button
-                          onClick={() => rejectUser(user.email)}
+                          onClick={() => rejectUser(userData.uid)}
                           className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all font-medium shadow-lg"
                         >
                           ❌ {t('reject')}
@@ -1071,11 +1123,11 @@ function App() {
               <h3 className="text-lg font-bold text-red-800 mb-3 flex items-center">
                 🗑️ {t('userManagement')} - {t('approvedUsers')}
                 <span className="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">
-                  {getApprovedUsers().filter(user => user.email !== currentUser.email).length} users
+                  {getApprovedUsers().filter(userData => userData.uid !== user.uid).length} users
                 </span>
               </h3>
               
-              {getApprovedUsers().filter(user => user.email !== currentUser.email).length > 0 ? (
+              {getApprovedUsers().filter(userData => userData.uid !== user.uid).length > 0 ? (
                 <div className="space-y-3">
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
                     <p className="text-red-800 text-sm font-medium flex items-center">
@@ -1085,9 +1137,9 @@ function App() {
                   </div>
                   
                   {getApprovedUsers()
-                    .filter(user => user.email !== currentUser.email)
-                    .map(user => (
-                      <div key={user.email} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border-2 border-red-200 hover:border-red-400 transition-all">
+                    .filter(userData => userData.uid !== user.uid)
+                    .map(userData => (
+                      <div key={userData.uid} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border-2 border-red-200 hover:border-red-400 transition-all">
                         <div className="flex items-center">
                           <div className="bg-red-100 p-2 rounded-full mr-3">
                             <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1095,16 +1147,16 @@ function App() {
                             </svg>
                           </div>
                           <div>
-                            <p className="font-bold text-gray-800">{user.username}</p>
-                            <p className="text-sm text-gray-600">{user.email}</p>
+                            <p className="font-bold text-gray-800">{userData.username}</p>
+                            <p className="text-sm text-gray-600">{userData.email}</p>
                             <div className="flex items-center space-x-2 mt-1">
-                              {user.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">{t('admin')}</span>}
-                              <span className="text-xs text-gray-500">Approved: {new Date(user.createdAt).toLocaleDateString()}</span>
+                              {userData.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">{t('admin')}</span>}
+                              <span className="text-xs text-gray-500">Approved: {new Date(userData.createdAt).toLocaleDateString()}</span>
                             </div>
                           </div>
                         </div>
                         <button
-                          onClick={() => removeUser(user.email)}
+                          onClick={() => removeUser(userData.uid)}
                           className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-bold shadow-lg transform hover:scale-105 flex items-center"
                         >
                           🗑️ {t('remove')}
@@ -1211,7 +1263,7 @@ function App() {
             </div>
 
             {/* Add Transaction Form - Only show if viewing own data */}
-            {(!selectedUserData || selectedUserData.email === currentUser.email) && (
+            {(!selectedUserData || selectedUserData.uid === user.uid) && (
               <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('addNewTransaction')}</h2>
                 <form onSubmit={addTransaction} className="space-y-4">
@@ -1281,7 +1333,7 @@ function App() {
             )}
 
             {/* Read-only message for viewing others' data */}
-            {selectedUserData && selectedUserData.email !== currentUser.email && (
+            {selectedUserData && selectedUserData.uid !== user.uid && (
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-8 text-center">
                 <p className="text-blue-800">👀 {t('readOnlyMode', { username: selectedUserData.username })}</p>
               </div>
@@ -1472,7 +1524,7 @@ function App() {
                         </span>
                         
                         {/* Only show edit/delete for own transactions */}
-                        {(!selectedUserData || selectedUserData.email === currentUser.email) && (
+                        {(!selectedUserData || selectedUserData.uid === user.uid) && (
                           <>
                             <button
                               onClick={() => startEdit(transaction)}
@@ -1578,7 +1630,7 @@ function App() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
-          <p>{t('dataSavedLocally', { count: transactions.length })}</p>
+          <p>{t('dataSavedLocally', { count: userTransactions.length })}</p>
         </div>
       </div>
     </div>
