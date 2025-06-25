@@ -4,7 +4,11 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  updateProfile
+  updateProfile,
+  updatePassword,
+  sendPasswordResetEmail,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase-config';
@@ -103,12 +107,44 @@ export const useAuth = () => {
     }
   };
 
+  // Change password for logged-in user
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      // Re-authenticate user before changing password
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      
+      // Update password
+      await updatePassword(user, newPassword);
+      
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Send password reset email
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return {
     user,
     userProfile,
     loading,
     signUp,
     signIn,
-    logOut
+    logOut,
+    changePassword,
+    resetPassword
   };
 };

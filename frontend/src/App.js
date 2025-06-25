@@ -66,6 +66,24 @@ const translations = {
     fillAllFields: "Please fill all fields",
     invalidCredentials: "Invalid email or password",
     pendingApproval: "Your account is pending admin approval",
+    forgotPassword: "Forgot Password?",
+    resetPassword: "Reset Password",
+    backToLogin: "Back to Login",
+    resetEmailSent: "Password reset email sent! Check your inbox.",
+    resetEmailError: "Error sending reset email. Please try again.",
+    
+    // Password Management
+    changePassword: "Change Password",
+    currentPassword: "Current Password",
+    newPassword: "New Password",
+    confirmNewPassword: "Confirm New Password",
+    passwordChanged: "Password changed successfully!",
+    wrongCurrentPassword: "Current password is incorrect",
+    enterCurrentPassword: "Enter your current password",
+    enterNewPassword: "Enter new password",
+    confirmNewPasswordPlaceholder: "Confirm new password",
+    profile: "Profile",
+    accountSettings: "Account Settings",
     
     // Navigation
     dashboard: "Dashboard",
@@ -185,6 +203,24 @@ const translations = {
     fillAllFields: "Ju lutemi plotësoni të gjitha fushat",
     invalidCredentials: "Email ose fjalëkalim i pavlefshëm",
     pendingApproval: "Llogaria juaj është në pritje të miratimit të administratorit",
+    forgotPassword: "Keni harruar fjalëkalimin?",
+    resetPassword: "Rivendosni Fjalëkalimin",
+    backToLogin: "Kthehu tek Hyrja",
+    resetEmailSent: "Email-i për rivendosjen e fjalëkalimit u dërgua! Kontrolloni kutinë tuaj.",
+    resetEmailError: "Gabim në dërgimin e email-it. Ju lutemi provoni përsëri.",
+    
+    // Password Management
+    changePassword: "Ndryshoni Fjalëkalimin",
+    currentPassword: "Fjalëkalimi Aktual",
+    newPassword: "Fjalëkalimi i Ri",
+    confirmNewPassword: "Konfirmoni Fjalëkalimin e Ri",
+    passwordChanged: "Fjalëkalimi u ndryshua me sukses!",
+    wrongCurrentPassword: "Fjalëkalimi aktual është i pasaktë",
+    enterCurrentPassword: "Futni fjalëkalimin tuaj aktual",
+    enterNewPassword: "Futni fjalëkalimin e ri",
+    confirmNewPasswordPlaceholder: "Konfirmoni fjalëkalimin e ri",
+    profile: "Profili",
+    accountSettings: "Cilësimet e Llogarisë",
     
     // Navigation
     dashboard: "Paneli",
@@ -278,7 +314,7 @@ const translations = {
 
 function App() {
   // Firebase authentication
-  const { user, userProfile, loading, signUp, signIn, logOut } = useAuth();
+  const { user, userProfile, loading, signUp, signIn, logOut, changePassword, resetPassword } = useAuth();
   
   // Language state
   const [language, setLanguage] = useState('en');
@@ -294,12 +330,20 @@ function App() {
 
   // Authentication state
   const [showLogin, setShowLogin] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ 
     username: '', 
     email: '', 
     password: '', 
     confirmPassword: '' 
+  });
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [changePasswordData, setChangePasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
   });
   
   // Admin constants
@@ -443,6 +487,57 @@ function App() {
         alert(t('pendingApproval'));
       } else {
         alert(t('invalidCredentials'));
+      }
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!forgotPasswordEmail) {
+      alert(t('enterEmail'));
+      return;
+    }
+    
+    try {
+      await resetPassword(forgotPasswordEmail);
+      alert(t('resetEmailSent'));
+      setShowForgotPassword(false);
+      setForgotPasswordEmail('');
+    } catch (error) {
+      alert(t('resetEmailError'));
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    const { currentPassword, newPassword, confirmNewPassword } = changePasswordData;
+    
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      alert(t('fillAllFields'));
+      return;
+    }
+    
+    if (newPassword !== confirmNewPassword) {
+      alert(t('passwordsNoMatch'));
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      alert(t('passwordTooShort'));
+      return;
+    }
+    
+    try {
+      await changePassword(currentPassword, newPassword);
+      alert(t('passwordChanged'));
+      setShowChangePassword(false);
+      setChangePasswordData({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+    } catch (error) {
+      if (error.code === 'auth/wrong-password') {
+        alert(t('wrongCurrentPassword'));
+      } else {
+        alert(error.message);
       }
     }
   };
@@ -790,6 +885,53 @@ function App() {
     );
   }
 
+  // Forgot Password UI
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">🔐</div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">{t('resetPassword')}</h1>
+            <p className="text-gray-600">Enter your email to reset your password</p>
+          </div>
+
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
+              <input
+                type="email"
+                value={forgotPasswordEmail}
+                onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                placeholder={t('enterEmail')}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium rounded-xl hover:from-blue-600 hover:to-purple-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+            >
+              {t('resetPassword')}
+            </button>
+          </form>
+          
+          <div className="text-center mt-6">
+            <button
+              onClick={() => {
+                setShowForgotPassword(false);
+                setForgotPasswordEmail('');
+              }}
+              className="text-purple-600 hover:text-purple-800 font-medium"
+            >
+              {t('backToLogin')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Login/Signup UI
   if (!user || !userProfile) {
     return (
@@ -886,6 +1028,16 @@ function App() {
               >
                 {t('login')}
               </button>
+              
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                >
+                  {t('forgotPassword')}
+                </button>
+              </div>
             </form>
           ) : (
             <form onSubmit={handleSignup} className="space-y-4">
@@ -1014,6 +1166,15 @@ function App() {
                   🇦🇱 AL
                 </button>
               </div>
+              
+              {/* Profile/Settings Button */}
+              <button
+                onClick={() => setShowChangePassword(true)}
+                className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-all"
+                title={t('accountSettings')}
+              >
+                ⚙️ {t('profile')}
+              </button>
               
               {selectedUserData && (
                 <button
@@ -1621,6 +1782,68 @@ function App() {
                     className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all"
                   >
                     {t('saveChanges')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Change Password Modal */}
+        {showChangePassword && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">🔐 {t('changePassword')}</h2>
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('currentPassword')}</label>
+                  <input
+                    type="password"
+                    value={changePasswordData.currentPassword}
+                    onChange={(e) => setChangePasswordData({...changePasswordData, currentPassword: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                    placeholder={t('enterCurrentPassword')}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('newPassword')}</label>
+                  <input
+                    type="password"
+                    value={changePasswordData.newPassword}
+                    onChange={(e) => setChangePasswordData({...changePasswordData, newPassword: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                    placeholder={t('enterNewPassword')}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('confirmNewPassword')}</label>
+                  <input
+                    type="password"
+                    value={changePasswordData.confirmNewPassword}
+                    onChange={(e) => setChangePasswordData({...changePasswordData, confirmNewPassword: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                    placeholder={t('confirmNewPasswordPlaceholder')}
+                    required
+                  />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowChangePassword(false);
+                      setChangePasswordData({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+                    }}
+                    className="flex-1 px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all"
+                  >
+                    {t('changePassword')}
                   </button>
                 </div>
               </form>
