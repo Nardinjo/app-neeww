@@ -29,6 +29,21 @@ ChartJS.register(
 );
 
 function App() {
+  // Authentication state
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLogin, setShowLogin] = useState(true);
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [signupData, setSignupData] = useState({ 
+    username: '', 
+    email: '', 
+    password: '', 
+    confirmPassword: '' 
+  });
+  
+  // Admin constants
+  const ADMIN_EMAIL = 'leonard.lamaj@gmail.com';
+  
   // State for transactions
   const [transactions, setTransactions] = useState([]);
   const [description, setDescription] = useState('');
@@ -50,6 +65,7 @@ function App() {
   
   // View state
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedUserData, setSelectedUserData] = useState(null);
 
   // Categories for expenses
   const categories = [
@@ -57,18 +73,177 @@ function App() {
     'Healthcare', 'Education', 'Travel', 'General'
   ];
 
-  // Load transactions from localStorage on component mount
+  // Initialize app - check for logged in user
   useEffect(() => {
-    const saved = localStorage.getItem('budgetTransactions');
-    if (saved) {
-      setTransactions(JSON.parse(saved));
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setCurrentUser(user);
+      setIsLoggedIn(true);
+      loadUserTransactions(user.email);
     }
   }, []);
 
-  // Save transactions to localStorage whenever transactions change
+  // User management functions
+  const getAllUsers = () => {
+    const users = localStorage.getItem('budgetUsers');
+    return users ? JSON.parse(users) : [];
+  };
+
+  const saveUser = (user) => {
+    const users = getAllUsers();
+    const existingIndex = users.findIndex(u => u.email === user.email);
+    if (existingIndex >= 0) {
+      users[existingIndex] = user;
+    } else {
+      users.push(user);
+    }
+    localStorage.setItem('budgetUsers', JSON.stringify(users));
+  };
+
+  const getPendingUsers = () => {
+    return getAllUsers().filter(user => !user.isApproved && user.email !== ADMIN_EMAIL);
+  };
+
+  const getApprovedUsers = () => {
+    return getAllUsers().filter(user => user.isApproved || user.email === ADMIN_EMAIL);
+  };
+
+  // Authentication functions
+  const handleSignup = (e) => {
+    e.preventDefault();
+    const { username, email, password, confirmPassword } = signupData;
+    
+    if (!username || !email || !password || !confirmPassword) {
+      alert('Please fill all fields');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+    
+    const users = getAllUsers();
+    if (users.some(user => user.email === email)) {
+      alert('Email already registered');
+      return;
+    }
+    
+    const newUser = {
+      username,
+      email,
+      password, // In real app, this would be hashed
+      isApproved: email === ADMIN_EMAIL, // Auto-approve admin
+      isAdmin: email === ADMIN_EMAIL,
+      createdAt: new Date().toISOString()
+    };
+    
+    saveUser(newUser);
+    
+    if (email === ADMIN_EMAIL) {
+      alert('Admin account created and approved!');
+      setCurrentUser(newUser);
+      setIsLoggedIn(true);
+      localStorage.setItem('currentUser', JSON.stringify(newUser));
+    } else {
+      alert('Account created! Please wait for admin approval.');
+    }
+    
+    setSignupData({ username: '', email: '', password: '', confirmPassword: '' });
+    setShowLogin(true);
+  };
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const { email, password } = loginData;
+    
+    if (!email || !password) {
+      alert('Please enter email and password');
+      return;
+    }
+    
+    const users = getAllUsers();
+    const user = users.find(u => u.email === email && u.password === password);
+    
+    if (!user) {
+      alert('Invalid email or password');
+      return;
+    }
+    
+    if (!user.isApproved && email !== ADMIN_EMAIL) {
+      alert('Your account is pending admin approval');
+      return;
+    }
+    
+    setCurrentUser(user);
+    setIsLoggedIn(true);
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    loadUserTransactions(email);
+    setLoginData({ email: '', password: '' });
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setIsLoggedIn(false);
+    setTransactions([]);
+    setSelectedUserData(null);
+    localStorage.removeItem('currentUser');
+    setActiveTab('dashboard');
+  };
+
+  const approveUser = (userEmail) => {
+    const users = getAllUsers();
+    const user = users.find(u => u.email === userEmail);
+    if (user) {
+      user.isApproved = true;
+      saveUser(user);
+      alert(`User ${user.username} has been approved!`);
+    }
+  };
+
+  const rejectUser = (userEmail) => {
+    if (window.confirm('Are you sure you want to reject this user?')) {
+      const users = getAllUsers().filter(u => u.email !== userEmail);
+      localStorage.setItem('budgetUsers', JSON.stringify(users));
+      alert('User rejected and removed');
+    }
+  };
+
+  // Transaction management with user separation
+  const getUserTransactionKey = (email) => `budgetTransactions_${email}`;
+
+  const loadUserTransactions = (email) => {
+    const key = getUserTransactionKey(email);
+    const saved = localStorage.getItem(key);
+    const userTransactions = saved ? JSON.parse(saved) : [];
+    setTransactions(userTransactions);
+  };
+
+  const saveUserTransactions = (email, transactions) => {
+    const key = getUserTransactionKey(email);
+    localStorage.setItem(key, JSON.stringify(transactions));
+  };
+
+  // Load transactions when user changes
   useEffect(() => {
-    localStorage.setItem('budgetTransactions', JSON.stringify(transactions));
-  }, [transactions]);
+    if (currentUser) {
+      const viewingUser = selectedUserData || currentUser;
+      loadUserTransactions(viewingUser.email);
+    }
+  }, [currentUser, selectedUserData]);
+
+  // Save transactions when they change (only if viewing own data)
+  useEffect(() => {
+    if (currentUser && (!selectedUserData || selectedUserData.email === currentUser.email)) {
+      saveUserTransactions(currentUser.email, transactions);
+    }
+  }, [transactions, currentUser, selectedUserData]);
 
   // Filter transactions by date range
   const getFilteredTransactions = () => {
@@ -103,9 +278,15 @@ function App() {
 
   const netBalance = totalIncome - totalExpenses;
 
-  // Add new transaction
+  // Add new transaction (only if viewing own data)
   const addTransaction = (e) => {
     e.preventDefault();
+    
+    if (selectedUserData && selectedUserData.email !== currentUser.email) {
+      alert('You can only add transactions to your own budget');
+      return;
+    }
+    
     if (!description.trim() || !amount || parseFloat(amount) <= 0) {
       alert('Please enter a valid description and amount');
       return;
@@ -119,7 +300,8 @@ function App() {
       type: type,
       category: type === 'expense' ? category : 'Income',
       date: now.toLocaleDateString(),
-      dateISO: now.toISOString().split('T')[0]
+      dateISO: now.toISOString().split('T')[0],
+      userId: currentUser.email
     };
 
     setTransactions([...transactions, newTransaction]);
@@ -128,8 +310,13 @@ function App() {
     setCategory('General');
   };
 
-  // Edit transaction
+  // Edit transaction (only if viewing own data)
   const startEdit = (transaction) => {
+    if (selectedUserData && selectedUserData.email !== currentUser.email) {
+      alert('You can only edit your own transactions');
+      return;
+    }
+    
     setEditingTransaction(transaction);
     setEditDescription(transaction.description);
     setEditAmount(transaction.amount.toString());
@@ -171,8 +358,13 @@ function App() {
     setEditCategory('General');
   };
 
-  // Delete transaction
+  // Delete transaction (only if viewing own data)
   const deleteTransaction = (id) => {
+    if (selectedUserData && selectedUserData.email !== currentUser.email) {
+      alert('You can only delete your own transactions');
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to delete this transaction?')) {
       setTransactions(transactions.filter(t => t.id !== id));
     }
@@ -192,7 +384,8 @@ function App() {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `budget-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+    const userName = selectedUserData ? selectedUserData.username : currentUser.username;
+    link.download = `budget-${userName}-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     window.URL.revokeObjectURL(url);
   };
@@ -203,7 +396,8 @@ function App() {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `budget-transactions-${new Date().toISOString().split('T')[0]}.json`;
+    const userName = selectedUserData ? selectedUserData.username : currentUser.username;
+    link.download = `budget-${userName}-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     window.URL.revokeObjectURL(url);
   };
@@ -284,14 +478,238 @@ function App() {
     setShowDateFilter(false);
   };
 
+  const switchToUserView = (user) => {
+    setSelectedUserData(user);
+    setActiveTab('dashboard');
+  };
+
+  const switchToOwnView = () => {
+    setSelectedUserData(null);
+    setActiveTab('dashboard');
+  };
+
+  // Login/Signup UI
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">💰 Budget Planner Pro</h1>
+            <p className="text-gray-600">Manage your finances together</p>
+          </div>
+
+          <div className="flex mb-6">
+            <button
+              onClick={() => setShowLogin(true)}
+              className={`flex-1 py-2 px-4 rounded-l-lg font-medium transition-all ${
+                showLogin 
+                  ? 'bg-purple-500 text-white' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setShowLogin(false)}
+              className={`flex-1 py-2 px-4 rounded-r-lg font-medium transition-all ${
+                !showLogin 
+                  ? 'bg-purple-500 text-white' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          {showLogin ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-xl hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+              >
+                Login
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                  type="text"
+                  value={signupData.username}
+                  onChange={(e) => setSignupData({...signupData, username: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                  placeholder="Choose a username"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={signupData.email}
+                  onChange={(e) => setSignupData({...signupData, email: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={signupData.password}
+                  onChange={(e) => setSignupData({...signupData, password: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                  placeholder="Create a password"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                <input
+                  type="password"
+                  value={signupData.confirmPassword}
+                  onChange={(e) => setSignupData({...signupData, confirmPassword: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white font-medium rounded-xl hover:from-green-600 hover:to-blue-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+              >
+                Sign Up
+              </button>
+              <p className="text-xs text-gray-500 text-center">
+                New accounts require admin approval (except leonard.lamaj@gmail.com)
+              </p>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">💰 Budget Planner Pro</h1>
-          <p className="text-gray-600">Track, analyze, and manage your finances</p>
+        <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
+          <div className="flex flex-wrap items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-1">
+                💰 Budget Planner Pro
+              </h1>
+              <p className="text-gray-600">
+                Welcome, {currentUser.username}! {selectedUserData && `(Viewing ${selectedUserData.username}'s budget)`}
+                {currentUser.isAdmin && <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 text-xs rounded-full">Admin</span>}
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              {selectedUserData && (
+                <button
+                  onClick={switchToOwnView}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
+                >
+                  My Budget
+                </button>
+              )}
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* User Selection for All Users */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">👥 View Other Users' Budgets</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {getApprovedUsers()
+              .filter(user => user.email !== currentUser.email)
+              .map(user => (
+                <button
+                  key={user.email}
+                  onClick={() => switchToUserView(user)}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    selectedUserData?.email === user.email
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl mb-2">👤</div>
+                    <p className="font-medium">{user.username}</p>
+                    <p className="text-sm text-gray-500">{user.email}</p>
+                    {user.isAdmin && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Admin</span>}
+                  </div>
+                </button>
+              ))}
+          </div>
+        </div>
+
+        {/* Admin Panel */}
+        {currentUser.isAdmin && (
+          <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">🔧 Admin Panel</h2>
+            {getPendingUsers().length > 0 ? (
+              <div className="space-y-3">
+                <h3 className="font-medium text-gray-700">Pending Approvals:</h3>
+                {getPendingUsers().map(user => (
+                  <div key={user.email} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div>
+                      <p className="font-medium">{user.username}</p>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => approveUser(user.email)}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => rejectUser(user.email)}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No pending approvals</p>
+            )}
+          </div>
+        )}
 
         {/* Navigation Tabs */}
         <div className="flex flex-wrap justify-center mb-8 bg-white rounded-2xl p-2 shadow-lg">
@@ -380,73 +798,82 @@ function App() {
               </div>
             </div>
 
-            {/* Add Transaction Form */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Add New Transaction</h2>
-              <form onSubmit={addTransaction} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <input
-                      type="text"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Enter description"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                    <select
-                      value={type}
-                      onChange={(e) => setType(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                    >
-                      <option value="income">💰 Income</option>
-                      <option value="expense">💸 Expense</option>
-                    </select>
-                  </div>
-                  {type === 'expense' && (
+            {/* Add Transaction Form - Only show if viewing own data */}
+            {(!selectedUserData || selectedUserData.email === currentUser.email) && (
+              <div className="bg-white rounded-2xl p-6 shadow-lg mb-8 border border-gray-100">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Add New Transaction</h2>
+                <form onSubmit={addTransaction} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Enter description"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
                       <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
+                        value={type}
+                        onChange={(e) => setType(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                       >
-                        {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
+                        <option value="income">💰 Income</option>
+                        <option value="expense">💸 Expense</option>
                       </select>
                     </div>
-                  )}
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-xl hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
-                  >
-                    Add Transaction
-                  </button>
-                </div>
-              </form>
-            </div>
+                    {type === 'expense' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select
+                          value={category}
+                          onChange={(e) => setCategory(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                        >
+                          {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-xl hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                    >
+                      Add Transaction
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Read-only message for viewing others' data */}
+            {selectedUserData && selectedUserData.email !== currentUser.email && (
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-8 text-center">
+                <p className="text-blue-800">👀 You are viewing {selectedUserData.username}'s budget (read-only)</p>
+              </div>
+            )}
           </>
         )}
 
@@ -631,24 +1058,30 @@ function App() {
                         }`}>
                           {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
                         </span>
-                        <button
-                          onClick={() => startEdit(transaction)}
-                          className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 transition-all"
-                          title="Edit transaction"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => deleteTransaction(transaction.id)}
-                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 transition-all"
-                          title="Delete transaction"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        
+                        {/* Only show edit/delete for own transactions */}
+                        {(!selectedUserData || selectedUserData.email === currentUser.email) && (
+                          <>
+                            <button
+                              onClick={() => startEdit(transaction)}
+                              className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 transition-all"
+                              title="Edit transaction"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => deleteTransaction(transaction.id)}
+                              className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 transition-all"
+                              title="Delete transaction"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -733,7 +1166,7 @@ function App() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
-          <p>Data is saved locally in your browser • {transactions.length} total transactions</p>
+          <p>Multi-user budget management • {transactions.length} transactions • Data saved locally</p>
         </div>
       </div>
     </div>
