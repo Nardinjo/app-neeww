@@ -939,27 +939,27 @@ function App() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Language Selector */}
-              <div className="bg-gray-100 rounded-lg p-1 flex">
+              {/* Language Selector - LARGE AND VISIBLE */}
+              <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-2 flex border border-purple-300">
                 <button
                   onClick={() => changeLanguage('en')}
-                  className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                  className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
                     language === 'en' 
-                      ? 'bg-white text-purple-600 shadow' 
-                      : 'text-gray-600 hover:text-gray-800'
+                      ? 'bg-purple-500 text-white shadow-lg' 
+                      : 'bg-white text-purple-600 hover:bg-purple-50'
                   }`}
                 >
-                  🇺🇸
+                  🇺🇸 EN
                 </button>
                 <button
                   onClick={() => changeLanguage('al')}
-                  className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                  className={`ml-1 px-4 py-2 rounded-md text-sm font-bold transition-all ${
                     language === 'al' 
-                      ? 'bg-white text-purple-600 shadow' 
-                      : 'text-gray-600 hover:text-gray-800'
+                      ? 'bg-purple-500 text-white shadow-lg' 
+                      : 'bg-white text-purple-600 hover:bg-purple-50'
                   }`}
                 >
-                  🇦🇱
+                  🇦🇱 AL
                 </button>
               </div>
               
